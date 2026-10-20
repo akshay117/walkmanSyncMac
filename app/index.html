@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'; script-src 'self'; img-src 'self' file: https: data:">
+  <title>WalkSync</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="drag"></div>
+
+  <!-- First-run setup -->
+  <section id="setup" class="overlay hidden">
+    <div class="setup-card">
+      <div class="logo">W</div>
+      <h1>Set up WalkSync</h1>
+      <p id="setup-msg">WalkSync needs a small Python engine for reading tags and cover art. This is a one-time setup and takes about a minute.</p>
+      <button id="setup-btn" class="btn primary">Install engine</button>
+      <pre id="setup-err" class="hidden"></pre>
+    </div>
+  </section>
+
+  <div class="layout" id="layout">
+    <!-- ─── Sidebar ─── -->
+    <aside class="sidebar">
+      <div class="brand"><span class="logo sm">W</span> WalkSync</div>
+
+      <div class="card">
+        <div id="device-empty" class="device-empty">
+          <div class="player-icon"><div class="screen"></div><div class="wheel"></div></div>
+          <h3>Connect your Walkman</h3>
+          <p>Plug in the NW-A55 and choose <b>Data transfer</b> on the player.</p>
+        </div>
+        <div id="device-info" class="device-info hidden">
+          <div class="row between">
+            <h3 id="dev-name">WALKMAN</h3>
+            <span class="pill ok">Connected</span>
+          </div>
+          <div class="storage">
+            <div class="bar"><div id="dev-bar"></div></div>
+            <div class="row between small muted"><span id="dev-used"></span><span id="dev-free"></span></div>
+          </div>
+          <div class="row gap btnrow">
+            <button class="btn ghost sm" id="open-btn">Open</button>
+            <button class="btn ghost sm" id="eject-btn">Eject</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <label class="label">Music folder on this Mac</label>
+        <div class="folder" id="folder">No folder chosen</div>
+        <button class="btn ghost sm" id="folder-btn">Choose…</button>
+      </div>
+
+      <div class="card tools">
+        <label class="label">Tools</label>
+        <button class="tool" id="act-sync"><span class="ic primary">⇅</span><span><b>Sync music</b><small>Copy new songs to the Walkman</small></span></button>
+        <button class="tool" id="act-dedupe"><span class="ic">⧉</span><span><b>Find duplicates</b><small>Nothing is removed until you confirm</small></span></button>
+        <button class="tool" id="act-clean"><span class="ic">✦</span><span><b>Clean macOS junk</b><small>Removes ._ files that show as broken tracks</small></span></button>
+        <div class="options">
+          <label><input type="checkbox" id="opt-fix" checked> Fix tags &amp; art while syncing</label>
+          <label><input type="checkbox" id="opt-online" checked> Look up missing info online</label>
+          <label><input type="checkbox" id="opt-dry"> Preview only</label>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ─── Library ─── -->
+    <main class="main">
+      <header class="lib-head">
+        <div>
+          <h2 id="lib-title">Songs</h2>
+          <div class="small muted" id="lib-sub"></div>
+        </div>
+        <div class="row gap">
+          <div class="segmented" id="target">
+            <button data-target="device" class="active">Walkman</button>
+            <button data-target="library">Music folder</button>
+          </div>
+          <input id="search" class="search" type="search" placeholder="Search title, artist, album">
+        </div>
+      </header>
+
+      <div class="chips" id="chips">
+        <button data-filter="all" class="active">All <span id="n-all">0</span></button>
+        <button data-filter="noart">Missing cover <span id="n-noart">0</span></button>
+        <button data-filter="notags">Missing details <span id="n-notags">0</span></button>
+        <button data-filter="badart">Cover won't show <span id="n-badart">0</span></button>
+      </div>
+
+      <div class="selbar hidden" id="selbar">
+        <span><b id="sel-count">0</b> selected</span>
+        <div class="row gap">
+          <button class="btn primary sm" id="sel-auto">Auto-fix online</button>
+          <button class="btn sm" id="sel-edit">Edit details &amp; cover</button>
+          <button class="btn sm" id="sel-cover">Set cover from image…</button>
+          <button class="btn ghost sm" id="sel-clear">Clear selection</button>
+        </div>
+      </div>
+
+      <div class="table-wrap" id="table-wrap">
+        <table class="songs">
+          <thead>
+            <tr>
+              <th class="c-check"><input type="checkbox" id="check-all" title="Select all shown"></th>
+              <th class="c-art"></th>
+              <th data-sort="title">Title</th>
+              <th data-sort="artist">Artist</th>
+              <th data-sort="album">Album</th>
+              <th data-sort="tracknumber" class="c-num">#</th>
+              <th data-sort="format" class="c-fmt">Format</th>
+              <th class="c-status">Status</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+        <div class="empty" id="empty"></div>
+      </div>
+
+      <!-- activity log -->
+      <div class="activity collapsed" id="activity">
+        <div class="act-head" id="act-head">
+          <div class="row gap">
+            <span class="dot" id="dot"></span>
+            <span id="task-title">Ready</span>
+          </div>
+          <div class="row gap">
+            <button class="btn danger sm hidden" id="apply-dupes">Move duplicates out</button>
+            <button class="btn ghost sm hidden" id="cancel-btn">Cancel</button>
+            <button class="btn ghost sm" id="toggle-log">Show log</button>
+          </div>
+        </div>
+        <div class="progress hidden" id="progress"><div id="progress-bar"></div></div>
+        <div class="log" id="log"><div class="muted">Activity will appear here.</div></div>
+      </div>
+    </main>
+
+    <!-- ─── Edit drawer ─── -->
+    <aside class="drawer" id="drawer">
+      <div class="drawer-head">
+        <h3 id="dr-title">Edit song</h3>
+        <button class="icon-btn" id="dr-close" title="Close">✕</button>
+      </div>
+      <div class="drawer-body">
+        <div class="cover-drop" id="dr-cover">
+          <img id="dr-img" alt="" class="hidden">
+          <div class="cover-empty" id="dr-noimg">No cover</div>
+          <span class="badge-new hidden" id="dr-new">New cover</span>
+          <div class="drop-hint">Drop an image to use it</div>
+        </div>
+        <div class="row gap cover-actions">
+          <button class="btn sm" id="dr-pick">Choose image…</button>
+          <button class="btn ghost sm hidden" id="dr-undo-cover">Undo cover</button>
+        </div>
+        <p class="small muted" id="dr-note"></p>
+        <div class="applies hidden" id="dr-applies"></div>
+
+        <div class="fields" id="dr-form">
+          <label>Title<input data-key="title"></label>
+          <label>Artist<input data-key="artist"></label>
+          <label>Album<input data-key="album"></label>
+          <label>Album artist<input data-key="albumartist"></label>
+          <div class="field-row">
+            <label>Track #<input data-key="tracknumber"></label>
+            <label>Year<input data-key="date"></label>
+          </div>
+          <label>Genre<input data-key="genre"></label>
+        </div>
+
+        <section class="find">
+          <h4>Find cover &amp; details online</h4>
+          <div class="find-form">
+            <input id="q-artist" placeholder="Artist">
+            <input id="q-title" placeholder="Song title">
+            <input id="q-album" placeholder="Album (optional)">
+            <button class="btn sm" id="q-go">Search</button>
+          </div>
+          <div class="results" id="q-results"></div>
+        </section>
+      </div>
+      <div class="drawer-foot">
+        <button class="btn ghost" id="dr-revert">Revert</button>
+        <button class="btn primary" id="dr-save" disabled>Save</button>
+      </div>
+    </aside>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>

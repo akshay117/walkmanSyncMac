@@ -1,0 +1,16 @@
+# dependencies & build output
+node_modules/
+app/dist/
+*.dmg
+*.blockmap
+
+# python
+__pycache__/
+*.pyc
+.venv/
+
+# macOS / editors
+.DS_Store
+._*
+.idea/
+.vscode/

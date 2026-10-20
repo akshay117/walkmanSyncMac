@@ -1,0 +1,88 @@
+{
+  "name": "walksync",
+  "productName": "WalkSync",
+  "version": "1.0.0",
+  "description": "Sync music, fix tags and cover art, and remove duplicates on a Sony Walkman NW-A55 from macOS",
+  "author": "Akshay V Anil",
+  "license": "MIT",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --mac --publish never"
+  },
+  "devDependencies": {
+    "electron": "^33.4.11",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "dev.akshay.walksync",
+    "productName": "WalkSync",
+    "copyright": "Copyright © 2026 Akshay V Anil",
+    "directories": {
+      "buildResources": "build",
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "renderer.js",
+      "styles.css"
+    ],
+    "extraResources": [
+      {
+        "from": "../engine",
+        "to": "engine",
+        "filter": [
+          "*.py",
+          "requirements.txt"
+        ]
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.music",
+      "icon": "build/icon.png",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ],
+      "identity": null,
+      "darkModeSupport": true,
+      "minimumSystemVersion": "11.0"
+    },
+    "dmg": {
+      "title": "WalkSync ${version}",
+      "artifactName": "WalkSync-${version}-${arch}.dmg",
+      "background": "build/background.png",
+      "icon": "build/icon.png",
+      "iconSize": 128,
+      "window": {
+        "width": 660,
+        "height": 400
+      },
+      "contents": [
+        {
+          "x": 180,
+          "y": 190,
+          "type": "file"
+        },
+        {
+          "x": 480,
+          "y": 190,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    },
+    "publish": null
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/akshay117/walksync.git"
+  }
+}

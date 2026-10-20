@@ -1,0 +1,70 @@
+name: Build & Release
+
+# Push a tag like v1.0.0 to build both DMGs and publish a GitHub Release.
+# "Run workflow" on the Actions tab builds the DMGs without releasing (download them from the run).
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check the engine
+        working-directory: engine
+        run: |
+          python -m pip install -r requirements.txt
+          python -m py_compile walksync.py
+          python walksync.py --help > /dev/null
+
+      - name: Set version from tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: npm version "${GITHUB_REF_NAME#v}" --no-git-tag-version --allow-same-version
+
+      - run: npm ci
+
+      - name: Build DMGs (Apple Silicon + Intel)
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"   # no Apple certificate: build unsigned
+        run: npx electron-builder --mac --publish never
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: WalkSync-dmg
+          path: app/dist/*.dmg
+          if-no-files-found: error
+
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: app/dist/*.dmg
+          generate_release_notes: true
+          body: |
+            ## Download
+            * **Apple Silicon (M1/M2/M3/M4):** `WalkSync-<version>-arm64.dmg`
+            * **Intel Macs:** `WalkSync-<version>-x64.dmg`
+
+            Open the DMG and drag WalkSync to Applications. The app isn't signed by Apple, so the first time **right-click WalkSync → Open**.
+            If macOS says it is damaged, run `xattr -cr /Applications/WalkSync.app` in Terminal.
+
+            Requires macOS 11+ and Python 3.9+ (`brew install python`).
