@@ -8,7 +8,7 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "dist": "electron-builder --mac --publish never"
+    "dist": "electron-builder --mac --arm64 --publish never"
   },
   "devDependencies": {
     "electron": "^33.4.11",
@@ -46,8 +46,7 @@
         {
           "target": "dmg",
           "arch": [
-            "arm64",
-            "x64"
+            "arm64"
           ]
         }
       ],

@@ -1,7 +1,7 @@
 name: Build & Release
 
-# Push a tag like v1.0.0 to build both DMGs and publish a GitHub Release.
-# "Run workflow" on the Actions tab builds the DMGs without releasing (download them from the run).
+# Push a tag like v1.0.0 to build the Apple Silicon DMG and publish a GitHub Release.
+# "Run workflow" on the Actions tab builds the DMG without releasing (download them from the run).
 on:
   push:
     tags: ["v*"]
@@ -42,10 +42,10 @@ jobs:
 
       - run: npm ci
 
-      - name: Build DMGs (Apple Silicon + Intel)
+      - name: Build DMG (Apple Silicon)
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"   # no Apple certificate: build unsigned
-        run: npx electron-builder --mac --publish never
+        run: npx electron-builder --mac --arm64 --publish never
 
       - uses: actions/upload-artifact@v4
         with:
@@ -61,10 +61,9 @@ jobs:
           generate_release_notes: true
           body: |
             ## Download
-            * **Apple Silicon (M1/M2/M3/M4):** `WalkSync-<version>-arm64.dmg`
-            * **Intel Macs:** `WalkSync-<version>-x64.dmg`
+            `WalkSync-<version>-arm64.dmg`, for Macs with Apple Silicon (M1 or later).
 
             Open the DMG and drag WalkSync to Applications. The app isn't signed by Apple, so the first time **right-click WalkSync → Open**.
             If macOS says it is damaged, run `xattr -cr /Applications/WalkSync.app` in Terminal.
 
-            Requires macOS 11+ and Python 3.9+ (`brew install python`).
+            Requires an Apple Silicon Mac, macOS 11+, and Python 3.9+ (`brew install python`).
