@@ -1,7 +1,7 @@
 name: Build & Release
 
-# Push a tag like v1.0.0 to build the Apple Silicon DMG and publish a GitHub Release.
-# "Run workflow" on the Actions tab builds the DMG without releasing (download them from the run).
+# Push a tag like v1.0.0 to build the Apple Silicon and Intel DMGs and publish a GitHub Release.
+# "Run workflow" on the Actions tab builds the DMGs without releasing (download them from the run).
 on:
   push:
     tags: ["v*"]
@@ -42,10 +42,18 @@ jobs:
 
       - run: npm ci
 
+      # The two DMGs are built one after the other on purpose. Both mount a volume named
+      # "WalkSync <version>" while being made; building them in one run overlaps those
+      # mounts and hdiutil fails with "resource busy" (exit 16).
       - name: Build DMG (Apple Silicon)
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"   # no Apple certificate: build unsigned
         run: npx electron-builder --mac --arm64 --publish never
+
+      - name: Build DMG (Intel)
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+        run: npx electron-builder --mac --x64 --publish never
 
       - uses: actions/upload-artifact@v4
         with:
@@ -61,9 +69,12 @@ jobs:
           generate_release_notes: true
           body: |
             ## Download
-            `WalkSync-<version>-arm64.dmg`, for Macs with Apple Silicon (M1 or later).
+            * **Apple Silicon (M1 or later):** `WalkSync-<version>-arm64.dmg`
+            * **Intel Macs:** `WalkSync-<version>-x64.dmg`
+
+            Not sure which you have? Apple menu → About This Mac: "Chip: Apple M…" means Apple Silicon, "Processor: Intel…" means Intel.
 
             Open the DMG and drag WalkSync to Applications. The app isn't signed by Apple, so the first time **right-click WalkSync → Open**.
             If macOS says it is damaged, run `xattr -cr /Applications/WalkSync.app` in Terminal.
 
-            Requires an Apple Silicon Mac, macOS 11+, and Python 3.9+ (`brew install python`).
+            Requires macOS 11+ and Python 3.9+ (`brew install python`).

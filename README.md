@@ -37,7 +37,7 @@ Tags are written as ID3v2.3 for MP3 (the version the Walkman reads most reliably
 
 ## Install
 
-1. Download `WalkSync-<version>-arm64.dmg` from [Releases](../../releases/latest).
+1. Download the DMG for your Mac from [Releases](../../releases/latest): `…-arm64.dmg` for Apple Silicon (M1 or later), `…-x64.dmg` for Intel. Apple menu → **About This Mac** shows which chip you have.
 2. Open it and drag **WalkSync** into **Applications**.
 3. The app isn't signed with an Apple developer certificate, so the first time, **right-click WalkSync → Open → Open**. If macOS says the app is damaged, run this once in Terminal:
    ```bash
@@ -45,7 +45,7 @@ Tags are written as ID3v2.3 for MP3 (the version the Walkman reads most reliably
    ```
 4. WalkSync needs Python 3.9+ (`brew install python`). On first launch, click **Install engine**. It creates a private Python environment with `mutagen` and `Pillow`, which takes about a minute.
 
-Requires a Mac with Apple Silicon (M1 or later) and macOS 11 or later. Intel Macs aren't supported.
+Requires macOS 11 or later, on Apple Silicon or Intel.
 
 ## Using it
 
@@ -107,7 +107,8 @@ You need Node 20+ and Python 3.9+ (`brew install node python`).
 cd app
 npm install
 npm start          # run the app in development
-npm run dist       # build app/dist/WalkSync-<version>-arm64.dmg
+npm run dist       # build app/dist/WalkSync-<version>-arm64.dmg and -x64.dmg
+npm run dist:arm64 # or just one of them (dist:x64 for Intel)
 ```
 
 The app's code is in `app/`: `main.js` is the Electron main process, and `renderer.js`, `index.html` and `styles.css` are the window. All file work is done by the Python engine in `engine/walksync.py`, which is bundled into the app.
@@ -121,7 +122,7 @@ git tag v1.0.1
 git push origin v1.0.1
 ```
 
-The workflow sets the app version from the tag, builds the DMG and publishes it as a GitHub Release with generated release notes. To build without releasing, open **Actions → Build & Release → Run workflow** and download the DMG from the run.
+The workflow sets the app version from the tag, builds both DMGs and publishes them as a GitHub Release with generated release notes. To build without releasing, open **Actions → Build & Release → Run workflow** and download the DMGs from the run.
 
 ## License
 
