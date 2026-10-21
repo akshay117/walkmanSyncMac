@@ -94,7 +94,8 @@ function findDevices() {
       const v = path.join(VOLUMES, name);
       try {
         const hasMusic = fs.statSync(path.join(v, 'MUSIC')).isDirectory();
-        if (hasMusic || name.toUpperCase().startsWith('WALKMAN')) out.push({ name, path: v });
+        const walkman = name.toUpperCase().startsWith('WALKMAN') || fs.existsSync(path.join(v, 'MP_ROOT'));
+        if (hasMusic || walkman) out.push({ name, path: v, walkman });
       } catch { /* not a Walkman */ }
     }
   } catch { /* /Volumes missing (not macOS) */ }

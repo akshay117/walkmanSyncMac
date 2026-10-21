@@ -676,6 +676,7 @@ function updateTools() {
   $('act-clean').disabled = busy || !state.device;
   $('act-dedupe').disabled = busy || !libraryReady();
   $('eject-btn').disabled = busy;
+  $('dev-select').disabled = busy;   // don't switch drives in the middle of a task
 }
 
 // ═════════════════════════════ Target, folder, device ═════════════════════════════
@@ -712,26 +713,56 @@ function renderFolder() {
   updateTools();
 }
 
-api.onDevices((devices) => {
+// Which connected drive to use: the one already in use, else the one you last
+// picked, else a drive that looks like a Walkman, else the first one found.
+function chooseDevice(devices, prev) {
+  return devices.find((d) => d.path === prev)
+    || devices.find((d) => d.path === load('device', null))
+    || devices.find((d) => d.walkman)
+    || devices[0] || null;
+}
+
+function useDevice(dev, why) {
   const prev = state.device && state.device.path;
-  state.device = devices.find((d) => d.path === prev) || devices[0] || null;
+  state.device = dev;
   renderDevice();
-  const now = state.device && state.device.path;
+  const now = dev && dev.path;
   if (now === prev) return;
-  if (now) {
-    log(`Walkman connected: ${state.device.name}`, 'info');
+  if (dev) {
+    log(why === 'switched' ? `Switched to ${dev.name}` : `Connected: ${dev.name}`, 'info');
     if (state.target !== 'device') { state.target = 'device'; save('target', 'device'); renderTarget(); }
   } else {
-    log('Walkman disconnected', 'info');
+    log('Device disconnected', 'info');
   }
   if (state.target === 'device') loadLibrary();
   refreshSpace();
+}
+
+api.onDevices((devices) => {
+  state.devices = devices;
+  useDevice(chooseDevice(devices, state.device && state.device.path), 'connected');
+  renderDevice();
+});
+
+$('dev-select').addEventListener('change', (e) => {
+  const dev = (state.devices || []).find((d) => d.path === e.target.value);
+  if (!dev) return;
+  save('device', dev.path);   // remembered for next launch / reconnect
+  useDevice(dev, 'switched');
 });
 
 function renderDevice() {
+  const devices = state.devices || [];
   $('device-empty').classList.toggle('hidden', !!state.device);
   $('device-info').classList.toggle('hidden', !state.device);
   if (state.device) $('dev-name').textContent = state.device.name;
+  const multi = devices.length > 1;
+  $('dev-switch').classList.toggle('hidden', !multi);
+  if (multi) {
+    $('dev-count').textContent = `${devices.length} drives connected · showing`;
+    $('dev-select').innerHTML = devices.map((d) =>
+      `<option value="${esc(d.path)}"${state.device && d.path === state.device.path ? ' selected' : ''}>${esc(d.name)}${d.walkman ? ' (Walkman)' : ''}</option>`).join('');
+  }
   updateTools();
 }
 
