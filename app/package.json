@@ -45,20 +45,14 @@
       "category": "public.app-category.music",
       "icon": "build/icon.png",
       "target": [
-        {
-          "target": "dmg",
-          "arch": [
-            "arm64",
-            "x64"
-          ]
-        }
+        "dmg"
       ],
       "identity": null,
       "darkModeSupport": true,
       "minimumSystemVersion": "11.0"
     },
     "dmg": {
-      "title": "WalkSync ${version}",
+      "title": "WalkSync ${version}${arch}",
       "artifactName": "WalkSync-${version}-${arch}.dmg",
       "background": "build/background.png",
       "icon": "build/icon.png",
